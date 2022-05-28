@@ -1,5 +1,6 @@
 go 1.18
 
 use (
+	./ex-05-010
 	./gopl-new
 )
