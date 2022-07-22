@@ -1,0 +1,42 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>ex-07-09</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <!-- Place favicon.ico in the root directory -->
+        <style>
+         table, th, td {
+             border: 1px solid black;
+         }
+         td, th {
+             padding: 0.2em 0.5em 0.2em 0.5em;
+         }
+
+        </style>
+
+    </head>
+    <body>
+        <h1><a href="/">Songs</a></h1>
+        <table>
+            <tr>
+                {{range $index, $element := .Order}}
+                    <th>{{if eq $element.Order 0}}👇{{else if eq $element.Order 1}}☝️{{end}}
+                        {{if gt $element.Position -1}}[{{$element.Position}}]{{end}}
+                        <a href="{{$element.Query}}"> {{$element.Title}}</a></th>
+                {{end}}
+            </tr>
+            {{range $index, $element := .Songs}}
+            <tr>
+                <td>{{$element.Title}}</td>
+                <td>{{$element.Artist}}</td>
+                <td>{{$element.Year}}</td>
+            </tr>
+            {{end}}
+        </table>
+    </body>
+</html>
