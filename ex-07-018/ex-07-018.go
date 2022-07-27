@@ -23,6 +23,7 @@ func elString(e Element, lvl int) string {
 	for _, atr := range e.Attr {
 		atrs += fmt.Sprintf(" %s='%s'", atr.Name.Local, atr.Value)
 	}
+
 	s := fmt.Sprintf("%s<%s%s>\n",strings.Repeat(" ", lvl), e.Type.Local, atrs)
 	for _, el := range e.Children {
 		switch el := el.(type) {
@@ -38,28 +39,6 @@ func elString(e Element, lvl int) string {
 
 func (e Element) String() string  {
 	return elString(e, 0)
-}
-
-type elementsStack []*Element
-
-func (st *elementsStack) Push(el *Element) {
-	*st = append(*st, el)
-}
-
-func (st *elementsStack) Pop() *Element {
-	el := (*st)[len(*st)-1]
-	*st = (*st)[:len(*st)-1]
-	return el
-}
-
-func (st *elementsStack) AddChildren(el Node) bool {
-	idx := len(*st)-1
-	if idx < 0 {
-		return false
-	}
-	elptr := (*st)[idx]
-	(*elptr).Children = append((*elptr).Children, el)
-	return true
 }
 
 func BuildNode(d *xml.Decoder, root Element) (Element, error) {
@@ -114,6 +93,16 @@ func Parse(r io.Reader) (Element, error) {
 	return Element{}, fmt.Errorf("Miss any nodes")
 }
 
+func main() {
+	res, err := Parse(os.Stdin)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		os.Exit(1)
+	}
+	fmt.Println(res.String())
+}
+
+
 var blob string = `
 <animals help='4'>
 	<animal>gopher</animal>
@@ -125,12 +114,3 @@ var blob string = `
 	<animal>gopher</animal>
 	<animal>zebra</animal>
 </animals>`
-
-func main() {
-	res, err := Parse(os.Stdin)
-	if err != nil {
-		fmt.Printf("Error: %s", err)
-		os.Exit(1)
-	}
-	fmt.Println(res.String())
-}
