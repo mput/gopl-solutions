@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type Node interface{}
+type Node interface{}  // CharData or *Element
 
 type CharData string
 
@@ -18,7 +18,7 @@ type Element struct {
 	Children []Node
 }
 
-func elString(e Element, lvl int) string {
+func elString(e *Element, lvl int) string {
 	atrs := ""
 	for _, atr := range e.Attr {
 		atrs += fmt.Sprintf(" %s='%s'", atr.Name.Local, atr.Value)
@@ -29,7 +29,7 @@ func elString(e Element, lvl int) string {
 		switch el := el.(type) {
 		case string:
 			s += strings.Repeat(" ", lvl + 2) + el + "\n"
-		case Element:
+		case *Element:
 			s += strings.Repeat(" ", lvl) + elString(el, lvl + 2)
 		}
 	}
@@ -37,11 +37,11 @@ func elString(e Element, lvl int) string {
 	return s
 }
 
-func (e Element) String() string  {
+func (e *Element) String() string  {
 	return elString(e, 0)
 }
 
-func BuildNode(d *xml.Decoder, root Element) (Element, error) {
+func BuildNode(d *xml.Decoder, root *Element) (*Element, error) {
 	for {
 		token, err := d.Token()
 		if err == io.EOF {
@@ -53,15 +53,14 @@ func BuildNode(d *xml.Decoder, root Element) (Element, error) {
 
 		switch token := token.(type) {
 		case xml.StartElement:
-			nextNode := Element{
+			nextNodePtr, err := BuildNode(d, &Element{
 				Type: token.Name,
 				Attr: token.Attr,
-			}
-			nextNode, err = BuildNode(d, nextNode)
+			})
 			if err != nil {
-				return Element{}, err
+				return &Element{}, err
 			}
-			root.Children = append(root.Children, nextNode)
+			root.Children = append(root.Children, nextNodePtr)
 		case xml.CharData:
 			s := strings.TrimSpace(string(token))
 			if s != "" {
@@ -73,30 +72,31 @@ func BuildNode(d *xml.Decoder, root Element) (Element, error) {
 	}
 }
 
-func Parse(r io.Reader) (Element, error) {
+func Parse(r io.Reader) (*Element, error) {
 	d := xml.NewDecoder(r)
-	rootNode := Element{
+	rootNode, err := BuildNode(d, &Element{
 		Type: xml.Name{Local: "root-service-element"},
 		Children: make([]Node, 0),
-	}
-	rootNode, err := BuildNode(d,rootNode)
+	})
 	if err != nil {
 		return rootNode, err
 	}
+
 	for _, v := range rootNode.Children {
-		v, ok := v.(Element)
+		v, ok := v.(*Element)
 		if ok {
 			return v, nil
 		}
 	}
 
-	return Element{}, fmt.Errorf("Miss any nodes")
+	return &Element{}, fmt.Errorf("Miss any nodes")
 }
 
 func main() {
-	res, err := Parse(os.Stdin)
+	// res, err := Parse(os.Stdin)
+	res, err := Parse(strings.NewReader(blob))
 	if err != nil {
-		fmt.Printf("Error: %s", err)
+		fmt.Printf("Error: %s\n", err)
 		os.Exit(1)
 	}
 	fmt.Println(res.String())
